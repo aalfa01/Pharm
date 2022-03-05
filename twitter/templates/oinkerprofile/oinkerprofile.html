@@ -1,0 +1,232 @@
+{% extends 'core/base.html' %}
+
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-2 mb-6" id="oinkerprofileapp">
+  <div class="columns">
+    <div class="column is-3"></div>
+    <div class="column is-6">
+      <div class="columns">
+        <div class="column is-4">
+
+
+          {% if user.oinkerprofile.avatar %}
+
+          <figure class="image ">
+            <img class="circular-img" src="{{ user.oinkerprofile.avatar.url }}" alt="">
+          </figure>
+
+          {% endif %}
+
+
+
+
+          {% if user != request.user %}
+          <a href="{% url 'conversation' user.id %}" class="button is-info">Send message</a>
+          {% if request.user.oinkerprofile in user.oinkerprofile.followed_by.all %}
+          <a href="{% url 'unfollow_oinker' user.username %}" class="button is-warning">Unfollow</a>
+          {% else %}
+          <a href="{% url 'follow_oinker' user.username %}" class="button is-dark">Follow</a>
+          {% endif %}
+          {% endif %}
+        </div>
+
+        <div class="column is-8">
+
+          <ul style="display: flex; justify-content: space-between;">
+            <li>
+              <h1 class="title" style="white-space: nowrap;">{{ user.username }}</h1>
+            </li>
+            <li><a class="button" href="{% url 'edit_profile' %}">Edit profile</a></li>
+            <li><i class="fa-solid fa-gear"></i></li>
+          </ul>
+
+
+          <ul class="mt-6" style="display: flex; justify-content: space-between;">
+            <li>Posts: <span class="has-text-black-bis has-text-weight-bold">5</span></li>
+            <li><a class="has-text-grey-dark" href="{% url 'followers' user.username %}">Followers: <span
+                  class="has-text-black-bis has-text-weight-bold">{{ user.oinkerprofile.followed_by.count }}</span></a>
+            </li>
+            <li><a class="has-text-grey-dark" href="{% url 'follows' user.username %}">Follows: <span
+                  class="has-text-black-bis has-text-weight-bold">{{ user.oinkerprofile.follows.count }}</span></a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+
+
+  <div class="tabs is-centered mt-6">
+    <ul>
+      <li class="is-active"><a>Pictures</a></li>
+      <li><a>Music</a></li>
+      <li><a>Videos</a></li>
+      <li><a>Documents</a></li>
+    </ul>
+  </div>
+
+
+
+  <!-- <div class="columns is-multiline mt-6">
+    {% for oink in oinks %}
+    <div class="column is-4">
+      <div class="card">
+        <div class="card-image">
+          <figure class="image is-4by3">
+            {% if user.oinkerprofile.avatar %}
+              <img src="{{ user.oinkerprofile.avatar.url }}" alt="">
+            {% endif %}
+          </figure>
+
+          <div class="media-content">
+            <div class="content">
+              <p>
+                <strong>{{ oink.created_by.username }}</strong>
+                <small>{{ oink.created_at|naturaltime }}</small>
+                <br>
+                {{ oink.body }}
+
+                <br>
+                <a @click="likeOink({{ oink.id }})" v-if="!liked_oinks.includes({{ oink.id }})">Like</a>
+                <span v-if="liked_oinks.includes({{ oink.id }})">Liked</span>
+                <small id="likes-{{ oink.id }}">{{ oink.likes.count }} likes</small>
+              </p>
+              <span><i class="uil uil-heart"></i></span>
+              <span><i class="uil uil-comment-dots"></i></span>
+              <span><i class="uil uil-share-alt"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+ -->
+
+
+
+
+
+
+
+
+
+  <div class="middle">
+    <div class="columns is-multiline">
+      {% for oink in oinks %}
+      <div class="column is-4">
+        <div class="feeds">
+          <div class="feed">
+            <div class="head">
+             
+      
+              <span class="edit">
+                <i class="uil uil-ellipsis-h"></i>
+              </span>
+      
+            </div>
+      
+            <div class="photo">
+              <img src="{{ user.oinkerprofile.avatar.url }}" alt="">
+      
+            </div>
+      
+            <div class="action-buttons">
+              <div class="interaction-buttons">
+                <span><i class="uil uil-heart"></i></span>
+                <span><i class="uil uil-comment-dots"></i></span>
+                <span><i class="uil uil-share-alt"></i></span>
+              </div>
+              <div class="bookmark">
+                <span><i class="uil uil-bookmark-full"></i></span>
+              </div>
+            </div>
+      
+            
+      
+            <div class="caption">
+              <p><b>Lana Rose</b> Lorem ipsum dolor sit quisquam eius. <span class="harsh-tag">#lifestyle</span></p>
+            </div>
+      
+            <div class="comments text-muted">
+              View all 277 comments
+            </div>
+      
+          </div>
+      
+         
+      
+          
+      
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% endblock %}
+
+
+
+
+
+  {% block script %}
+
+  <script>
+    new Vue({
+
+      el: '#oinkerprofileapp',
+      delimiters: ['[[', ']]'],
+
+      data() {
+        return {
+          liked_oinks: [{% for oink in oinks %}{% if oink.liked %} { { oink.id } }, {% endif %} {% endfor %}]
+      }
+    },
+
+      methods: {
+      likeOink(oink_id) {
+        this.liked_oinks.push(parseInt(oink_id));
+
+        var oink = {
+          'oink_id': oink_id
+        };
+
+        fetch('/api/add_like/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(oink)
+        })
+
+          .then((response) => {
+            console.log(response)
+          })
+
+          .catch((error) => {
+            console.log(error);
+          });
+
+        const el = document.getElementById('likes-' + oink_id);
+        const likes = parseInt(el.innerHTML.split(' ')[0] + 1);
+        el.innerHTML = likes + ' likes';
+
+      },
+
+
+    },
+
+  })
+  </script>
+
+  {% endblock %}
